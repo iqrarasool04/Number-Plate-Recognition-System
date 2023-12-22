@@ -23,7 +23,7 @@ net.setPreferableTarget(cv2.dnn.DNN_TARGET_CPU)
 
 def get_detections(img,net):
 
-    # 1.CONVERT IMAGE TO YOLO FORMAT
+    # CONVERT IMAGE TO YOLO FORMAT
     image = img.copy()
     row, col, d = image.shape
 
@@ -31,7 +31,7 @@ def get_detections(img,net):
     input_image = np.zeros((max_rc,max_rc,3),dtype=np.uint8)
     input_image[0:row,0:col] = image
 
-    # 2. GET PREDICTION FROM YOLO MODEL
+    # GET PREDICTION FROM YOLO MODEL
     blob = cv2.dnn.blobFromImage(input_image,1/255,(INPUT_WIDTH,INPUT_HEIGHT),swapRB=True,crop=False)
     net.setInput(blob)
     preds = net.forward()
@@ -45,9 +45,7 @@ def get_detections(img,net):
 # for post processing of results
 def non_maximum_supression(input_image,detections):
     
-    # 3. FILTER DETECTIONS BASED ON CONFIDENCE AND PROBABILIY SCORE
-    
-    # center x, center y, w , h, conf, proba
+    # FILTER DETECTIONS BASED ON CONFIDENCE AND PROBABILIY SCORE
     boxes = []
     confidences = []
 
@@ -82,7 +80,7 @@ def non_maximum_supression(input_image,detections):
 
 
 def drawings(image,boxes_np,confidences_np,index):
-    # 5. Drawings
+    # Drawings
     for ind in index:
         x,y,w,h =  boxes_np[ind]
         bb_conf = confidences_np[ind]
@@ -96,11 +94,11 @@ def drawings(image,boxes_np,confidences_np,index):
 
 # predictions flow with return result
 def yolo_predictions(img,net):
-    # step-1: detections
+    # detections
     input_image, detections = get_detections(img,net)
-    # step-2: NMS
+    # NMS
     boxes_np, confidences_np, index = non_maximum_supression(input_image, detections)
-    # step-3: Drawings
+    # Drawings
     result_img = drawings(img,boxes_np,confidences_np,index)
 
     global box_coordinate
@@ -120,46 +118,12 @@ def croptheROI(image,bbox, index):
     for i in index:   
         x,y,w,h =  bbox[i]
         cropped = image[y:y+h, x:x+w]
-        # Check if 'cropped' is not None before writing
+        # Check if 'cropped' is not None 
         if cropped is not None:
           cv2.imwrite('cropped.png', cropped)
 
     return cropped
 
-
-
-# def preprocessing(crop):
-
-#     # crop = cv2.imread('cropped.png')
-#     gray = cv2.cvtColor(crop, cv2.COLOR_BGR2GRAY)
-
-#     bfilter = cv2.bilateralFilter(gray, 11, 17, 17) #Noise reduction
-#     edged = cv2.Canny(bfilter, 30, 200) # Edge detection
-
-#     keypoints = cv2.findContours(edged.copy(), cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
-#     contours = imutils.grab_contours(keypoints)
-#     contours = sorted(contours, key = cv2.contourArea, reverse = True)[:10]
-
-
-#     location = None
-#     for contour in contours:
-#         approx = cv2.approxPolyDP(contour,10, True)
-#         if len(approx)==4:
-#             location = approx
-#             break
-
-
-#     mask = np.zeros(gray.shape, np.uint8)
-#     new_image = cv2.drawContours(mask, [location], 0, 255, -1)
-#     new_image = cv2.bitwise_and(crop, crop, mask=mask)
-
-#     (x,y) = np.where(mask==255)
-#     (x1,y1) = (np.min(x), np.min(y))
-#     (x2,y2) = (np.max(x), np.max(y))
-#     cropped_image = gray[x1:x2+1, y1:y2+1]
-
-
-#     return cropped_image
 
 def preprocessing(crop):
     gray = cv2.cvtColor(crop, cv2.COLOR_BGR2GRAY)
@@ -172,7 +136,7 @@ def preprocessing(crop):
     contours = sorted(contours, key=cv2.contourArea, reverse=True)[:10]
 
     if not contours:
-        # No contours found, handle this case (e.g., return an error or an empty result)
+        # handle case of no contours found 
         print("No contours found.")
         return None
 
@@ -195,7 +159,7 @@ def preprocessing(crop):
 
         return cropped_image
     else:
-        # Invalid contour, handle this case (e.g., return an error or an empty result)
+        # handle case of invalid contours found 
         print("Invalid contour found.")
         return None
 
@@ -210,32 +174,10 @@ def extract_text(cropped_image):
     
     return result
 
-# # Read the original image
-# original_image = cv2.imread('C:\\Users\\DELL\\Desktop\\nhihoraha\\samples\\download1.jpg')  # Replace with the actual path to your image
-
-# # Resize the image to 1200x700
-# resized_image = cv2.resize(original_image, (1200, 700))
-# # Display the original and resized images using Matplotlib
-# plt.subplot(1, 2, 1), plt.imshow(cv2.cvtColor(original_image, cv2.COLOR_BGR2RGB)), plt.title('Original Image')
-# plt.subplot(1, 2, 2), plt.imshow(cv2.cvtColor(resized_image, cv2.COLOR_BGR2RGB)), plt.title('Resized Image')
-# plt.show()
-
-# # test
-# img = skimage.io.imread(resized_image)
-# results = yolo_predictions(img,net)
-# roi = croptheROI(img,box_coordinate,nm_index)
-# pp_image = preprocessing(roi)
-# text = extract_text(pp_image)
-# print(text)
-# fig = px.imshow(img)
-# fig.update_layout(width=700, height=400, margin=dict(l=10, r=10, b=10, t=10))
-# fig.update_xaxes(showticklabels=False).update_yaxes(showticklabels=False)
-# fig.show()
-
 # Read the original image
 original_image = cv2.imread('C:\\Users\\DELL\\Documents\\GitHub\\Number-Plate-Recognition-System\\samples\\seecsCar1.jpg')  
 
-# Resize the image to 1200x700
+# Resize the image
 resized_image = cv2.resize(original_image, (1200, 1200))
 
 # Display the original and resized images using Matplotlib
