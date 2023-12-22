@@ -15,7 +15,7 @@ INPUT_HEIGHT = 640
 
 
 # LOAD YOLO MODEL
-net = cv2.dnn.readNetFromONNX('C:\\Users\\DELL\\Desktop\\nhihoraha\\weights\\best.onnx') 
+net = cv2.dnn.readNetFromONNX('C:\\Users\\DELL\\Documents\\GitHub\\Number-Plate-Recognition-System\\weights\\best.onnx') 
 net.setPreferableBackend(cv2.dnn.DNN_BACKEND_OPENCV)
 net.setPreferableTarget(cv2.dnn.DNN_TARGET_CPU)
 
@@ -233,7 +233,7 @@ def extract_text(cropped_image):
 # fig.show()
 
 # Read the original image
-original_image = cv2.imread('C:\\Users\\DELL\\Desktop\\nhihoraha\\samples\\car.mp4')  
+original_image = cv2.imread('C:\\Users\\DELL\\Documents\\GitHub\\Number-Plate-Recognition-System\\samples\\seecsCar1.jpg')  
 
 # Resize the image to 1200x700
 resized_image = cv2.resize(original_image, (1200, 1200))
