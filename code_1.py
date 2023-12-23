@@ -9,6 +9,9 @@ import easyocr
 import plotly.express as px
 pt.pytesseract.tesseract_cmd = 'C:\\Program Files (x86)\\tesseract.exe'  
 import skimage.io
+from imutils.video import VideoStream
+import keyboard
+import time
 
 INPUT_WIDTH =  640
 INPUT_HEIGHT = 640
@@ -166,41 +169,113 @@ def preprocessing(crop):
 
 
 
+# def extract_text(cropped_image):
+    
+#     reader = easyocr.Reader(['en'])
+#     result = reader.readtext(cropped_image)
+    
+    
+#     return result
+    
 def extract_text(cropped_image):
-    
+    # Check if cropped_image is not None
+    if cropped_image is None:
+        print("No valid cropped image.")
+        return None
+
+    # Convert NumPy array to bytes
+    _, buffer = cv2.imencode('.jpg', cropped_image)
+    image_bytes = buffer.tobytes()
+
+    # Use easyocr to extract text
     reader = easyocr.Reader(['en'])
-    result = reader.readtext(cropped_image)
-    
-    
+    result = reader.readtext(image_bytes)
+
     return result
 
-# Read the original image
-original_image = cv2.imread('C:\\Users\\DELL\\Documents\\GitHub\\Number-Plate-Recognition-System\\samples\\seecsCar1.jpg')  
+# Function to process each frame
+def process_frame(frame):
+    # Resize the frame if needed
+    resized_frame = cv2.resize(frame, (1200, 1200))
 
-# Resize the image
-resized_image = cv2.resize(original_image, (1200, 1200))
+    # Perform number plate detection on the frame
+    results = yolo_predictions(resized_frame, net)
+    roi = croptheROI(resized_frame, box_coordinate, nm_index)
 
-# Display the original and resized images using Matplotlib
-plt.subplot(1, 2, 1), plt.imshow(cv2.cvtColor(original_image, cv2.COLOR_BGR2RGB)), plt.title('Original Image')
-plt.subplot(1, 2, 2), plt.imshow(cv2.cvtColor(resized_image, cv2.COLOR_BGR2RGB)), plt.title('Resized Image')
-plt.show()
+    # Check if 'roi' is not None before proceeding with further processing
+    if roi is not None:
+        pp_image = preprocessing(roi)
+        text = extract_text(pp_image)
+        print(text)
 
-# test
-results = yolo_predictions(resized_image, net)
-roi = croptheROI(resized_image, box_coordinate, nm_index)
-# Check if 'roi' is not None before proceeding with further processing
-roi = croptheROI(resized_image, box_coordinate, nm_index)
-if roi is not None:
-    pp_image = preprocessing(roi)
-    text = extract_text(pp_image)
-    print(text)
-    fig = px.imshow(resized_image)
-    fig.update_layout(width=700, height=400, margin=dict(l=10, r=10, b=10, t=10))
-    fig.update_xaxes(showticklabels=False).update_yaxes(showticklabels=False)
-    fig.show()
-else:
-    print("No contours found in the cropped image.")
+        # Display the processed frame
+        cv2.imshow('Processed Frame', resized_frame)
+    else:
+        print("No contours found in the cropped image.")
 
 
-import plotly.io as ip
-ip.renderers.default='browser'
+# # Read the original image
+# original_image = cv2.imread('C:\\Users\\DELL\\Documents\\GitHub\\Number-Plate-Recognition-System\\samples\\seecsCar1.jpg')  
+
+# # Resize the image
+# resized_image = cv2.resize(original_image, (1200, 1200))
+
+# # Display the original and resized images using Matplotlib
+# plt.subplot(1, 2, 1), plt.imshow(cv2.cvtColor(original_image, cv2.COLOR_BGR2RGB)), plt.title('Original Image')
+# plt.subplot(1, 2, 2), plt.imshow(cv2.cvtColor(resized_image, cv2.COLOR_BGR2RGB)), plt.title('Resized Image')
+# plt.show()
+
+# # test
+# results = yolo_predictions(resized_image, net)
+# roi = croptheROI(resized_image, box_coordinate, nm_index)
+# # Check if 'roi' is not None before proceeding with further processing
+# roi = croptheROI(resized_image, box_coordinate, nm_index)
+# if roi is not None:
+#     pp_image = preprocessing(roi)
+#     text = extract_text(pp_image)
+#     print(text)
+#     fig = px.imshow(resized_image)
+#     fig.update_layout(width=700, height=400, margin=dict(l=10, r=10, b=10, t=10))
+#     fig.update_xaxes(showticklabels=False).update_yaxes(showticklabels=False)
+#     fig.show()
+# else:
+#     print("No contours found in the cropped image.")
+
+
+# import plotly.io as ip
+# ip.renderers.default='browser'
+
+# Initialize the video capture object
+video_path = 'C:\\Users\\DELL\\Documents\\GitHub\\Number-Plate-Recognition-System\\samples\\car3.webm' 
+cap = cv2.VideoCapture(video_path)
+
+# Check if the video file opened successfully
+if not cap.isOpened():
+    print("Error opening video file")
+    exit()
+
+# Create a VideoWriter object to save the processed frames
+output_path = 'C:\\Users\\DELL\\Documents\\GitHub\\Number-Plate-Recognition-System\\samples'  
+fourcc = cv2.VideoWriter_fourcc(*'XVID')
+output_video = cv2.VideoWriter(output_path + 'output.avi', fourcc, 20.0, (1200, 1200))  
+
+# Loop through each frame in the video
+while True:
+    # Read the next frame from the video
+    ret, frame = cap.read()
+
+    # Check if the video has ended
+    if not ret:
+        print("End of video")
+        break
+
+    # Process the current frame
+    process_frame(frame)
+
+    # Introduce a time delay (e.g., 0.1 seconds)
+    time.sleep(0.1)
+
+# Release the video capture object and close all windows
+cap.release()
+output_video.release()
+cv2.destroyAllWindows()
