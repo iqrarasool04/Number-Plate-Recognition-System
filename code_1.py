@@ -17,7 +17,7 @@ INPUT_WIDTH =  640
 INPUT_HEIGHT = 640
 
 
-# LOAD YOLO MODEL
+#loading trained yolo model
 net = cv2.dnn.readNetFromONNX('C:\\Users\\DELL\\Documents\\GitHub\\Number-Plate-Recognition-System\\weights\\best.onnx') 
 net.setPreferableBackend(cv2.dnn.DNN_BACKEND_OPENCV)
 net.setPreferableTarget(cv2.dnn.DNN_TARGET_CPU)
@@ -26,7 +26,7 @@ net.setPreferableTarget(cv2.dnn.DNN_TARGET_CPU)
 
 def get_detections(img,net):
 
-    # CONVERT IMAGE TO YOLO FORMAT
+    #converting images to yolo format
     image = img.copy()
     row, col, d = image.shape
 
@@ -34,21 +34,20 @@ def get_detections(img,net):
     input_image = np.zeros((max_rc,max_rc,3),dtype=np.uint8)
     input_image[0:row,0:col] = image
 
-    # GET PREDICTION FROM YOLO MODEL
+    #getting predictions from yolo model
     blob = cv2.dnn.blobFromImage(input_image,1/255,(INPUT_WIDTH,INPUT_HEIGHT),swapRB=True,crop=False)
     net.setInput(blob)
     preds = net.forward()
     detections = preds[0]
     
-    # cv2.imshow(input_image)
     return input_image, detections
     
 
 
-# for post processing of results
+#for post processing of results
 def non_maximum_supression(input_image,detections):
     
-    # FILTER DETECTIONS BASED ON CONFIDENCE AND PROBABILIY SCORE
+    #detecting filters based on models and probability
     boxes = []
     confidences = []
 
@@ -58,9 +57,9 @@ def non_maximum_supression(input_image,detections):
 
     for i in range(len(detections)):
         row = detections[i]
-        confidence = row[4] # confidence of detecting license plate
+        confidence = row[4] #confidence of detecting license plate
         if confidence > 0.4:
-            class_score = row[5] # probability score of license plate
+            class_score = row[5] #probability score of license plate
             if class_score > 0.25:
                 cx, cy , w, h = row[0:4]
                 left = int((cx - 0.5*w)*x_factor)
@@ -71,11 +70,11 @@ def non_maximum_supression(input_image,detections):
                 confidences.append(confidence)
                 boxes.append(box)
 
-    #  CLEAN
+    #cleaning
     boxes_np = np.array(boxes).tolist() 
     confidences_np = np.array(confidences).tolist()
     
-    #  NMS
+    #NMS
     index = cv2.dnn.NMSBoxes(boxes_np,confidences_np,0.25,0.45)
     
     return boxes_np, confidences_np, index
@@ -128,43 +127,43 @@ def croptheROI(image,bbox, index):
     return cropped
 
 
-def preprocessing(crop):
-    gray = cv2.cvtColor(crop, cv2.COLOR_BGR2GRAY)
+# def preprocessing(crop):
+#     gray = cv2.cvtColor(crop, cv2.COLOR_BGR2GRAY)
 
-    bfilter = cv2.bilateralFilter(gray, 11, 17, 17)  # Noise reduction
-    edged = cv2.Canny(bfilter, 30, 200)  # Edge detection
+#     bfilter = cv2.bilateralFilter(gray, 11, 17, 17)  # Noise reduction
+#     edged = cv2.Canny(bfilter, 30, 200)  # Edge detection
 
-    keypoints = cv2.findContours(edged.copy(), cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
-    contours = imutils.grab_contours(keypoints)
-    contours = sorted(contours, key=cv2.contourArea, reverse=True)[:10]
+#     keypoints = cv2.findContours(edged.copy(), cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
+#     contours = imutils.grab_contours(keypoints)
+#     contours = sorted(contours, key=cv2.contourArea, reverse=True)[:10]
 
-    if not contours:
-        # handle case of no contours found 
-        print("No contours found.")
-        return None
+#     if not contours:
+#         # handle case of no contours found 
+#         print("No contours found.")
+#         return None
 
-    location = None
-    for contour in contours:
-        approx = cv2.approxPolyDP(contour, 10, True)
-        if len(approx) == 4:
-            location = approx
-            break
+#     location = None
+#     for contour in contours:
+#         approx = cv2.approxPolyDP(contour, 10, True)
+#         if len(approx) == 4:
+#             location = approx
+#             break
 
-    if location is not None:
-        mask = np.zeros(gray.shape, np.uint8)
-        new_image = cv2.drawContours(mask, [location], 0, 255, -1)
-        new_image = cv2.bitwise_and(crop, crop, mask=mask)
+#     if location is not None:
+#         mask = np.zeros(gray.shape, np.uint8)
+#         new_image = cv2.drawContours(mask, [location], 0, 255, -1)
+#         new_image = cv2.bitwise_and(crop, crop, mask=mask)
 
-        (x, y) = np.where(mask == 255)
-        (x1, y1) = (np.min(x), np.min(y))
-        (x2, y2) = (np.max(x), np.max(y))
-        cropped_image = gray[x1:x2 + 1, y1:y2 + 1]
+#         (x, y) = np.where(mask == 255)
+#         (x1, y1) = (np.min(x), np.min(y))
+#         (x2, y2) = (np.max(x), np.max(y))
+#         cropped_image = gray[x1:x2 + 1, y1:y2 + 1]
 
-        return cropped_image
-    else:
-        # handle case of invalid contours found 
-        print("Invalid contour found.")
-        return None
+#         return cropped_image
+#     else:
+#         # handle case of invalid contours found 
+#         print("Invalid contour found.")
+#         return None
 
 
 
@@ -193,29 +192,10 @@ def preprocessing(crop):
 
 #     return result
 
-# # Function to process each frame
-# def process_frame(frame):
-#     # Resize the frame if needed
-#     resized_frame = cv2.resize(frame, (1200, 1200))
-
-#     # Perform number plate detection on the frame
-#     results = yolo_predictions(resized_frame, net)
-#     roi = croptheROI(resized_frame, box_coordinate, nm_index)
-
-#     # Check if 'roi' is not None before proceeding with further processing
-#     if roi is not None:
-#         pp_image = preprocessing(roi)
-#         text = extract_text(pp_image)
-#         print(text)
-
-#         # Display the processed frame
-#         cv2.imshow('Processed Frame', resized_frame)
-#     else:
-#         print("No contours found in the cropped image.")
 
 
 # Read the original image
-original_image = cv2.imread('C:\\Users\\DELL\\Documents\\GitHub\\Number-Plate-Recognition-System\\samples\\car2.jpg')  
+original_image = cv2.imread('C:\\Users\\DELL\\Documents\\GitHub\\Number-Plate-Recognition-System\\samples\\DSC_1106.jpg')  
 
 # Resize the image
 resized_image = cv2.resize(original_image, (1200, 1200))
@@ -231,7 +211,7 @@ roi = croptheROI(resized_image, box_coordinate, nm_index)
 # Check if 'roi' is not None before proceeding with further processing
 roi = croptheROI(resized_image, box_coordinate, nm_index)
 if roi is not None:
-    pp_image = preprocessing(roi)
+    # pp_image = preprocessing(roi)
     # text = extract_text(pp_image)
     # print(text)
     fig = px.imshow(resized_image)
