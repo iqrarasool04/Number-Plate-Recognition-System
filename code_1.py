@@ -7,7 +7,7 @@ import matplotlib.pyplot as plt
 import pytesseract as pt
 import easyocr
 import plotly.express as px
-pt.pytesseract.tesseract_cmd = 'C:\\Program Files (x86)\\tesseract.exe'  
+# pt.pytesseract.tesseract_cmd = 'C:\\Program Files (x86)\\tesseract.exe'  
 import skimage.io
 from imutils.video import VideoStream
 import keyboard
@@ -18,13 +18,13 @@ INPUT_HEIGHT = 640
 
 
 #loading trained yolo model
-net = cv2.dnn.readNetFromONNX('C:\\Users\\DELL\\Documents\\GitHub\\Number-Plate-Recognition-System\\weights\\best.onnx') 
-net.setPreferableBackend(cv2.dnn.DNN_BACKEND_OPENCV)
-net.setPreferableTarget(cv2.dnn.DNN_TARGET_CPU)
+model = cv2.dnn.readNetFromONNX('C:\\Users\\DELL\\Documents\\GitHub\\Number-Plate-Recognition-System\\weights\\best.onnx') 
+model.setPreferableBackend(cv2.dnn.DNN_BACKEND_OPENCV)
+model.setPreferableTarget(cv2.dnn.DNN_TARGET_CPU)
 
 
 
-def get_detections(img,net):
+def get_detections(img,model):
 
     #converting images to yolo format
     image = img.copy()
@@ -36,8 +36,8 @@ def get_detections(img,net):
 
     #getting predictions from yolo model
     blob = cv2.dnn.blobFromImage(input_image,1/255,(INPUT_WIDTH,INPUT_HEIGHT),swapRB=True,crop=False)
-    net.setInput(blob)
-    preds = net.forward()
+    model.setInput(blob)
+    preds = model.forward()
     detections = preds[0]
     
     return input_image, detections
@@ -95,9 +95,9 @@ def drawings(image,boxes_np,confidences_np,index):
 
 
 # predictions flow with return result
-def yolo_predictions(img,net):
+def yolo_predictions(img,model):
     # detections
-    input_image, detections = get_detections(img,net)
+    input_image, detections = get_detections(img,model)
     # NMS
     boxes_np, confidences_np, index = non_maximum_supression(input_image, detections)
     # Drawings
@@ -201,15 +201,14 @@ original_image = cv2.imread('C:\\Users\\DELL\\Documents\\GitHub\\Number-Plate-Re
 resized_image = cv2.resize(original_image, (1200, 1200))
 
 # Display the original and resized images using Matplotlib
-plt.subplot(1, 2, 1), plt.imshow(cv2.cvtColor(original_image, cv2.COLOR_BGR2RGB)), plt.title('Original Image')
-plt.subplot(1, 2, 2), plt.imshow(cv2.cvtColor(resized_image, cv2.COLOR_BGR2RGB)), plt.title('Resized Image')
-plt.show()
+# plt.subplot(1, 2, 1), plt.imshow(cv2.cvtColor(original_image, cv2.COLOR_BGR2RGB)), plt.title('Original Image')
+# plt.subplot(1, 2, 2), plt.imshow(cv2.cvtColor(resized_image, cv2.COLOR_BGR2RGB)), plt.title('Resized Image')
+# plt.show()
 
 # test
-results = yolo_predictions(resized_image, net)
+results = yolo_predictions(resized_image, model)
 roi = croptheROI(resized_image, box_coordinate, nm_index)
 # Check if 'roi' is not None before proceeding with further processing
-roi = croptheROI(resized_image, box_coordinate, nm_index)
 if roi is not None:
     # pp_image = preprocessing(roi)
     # text = extract_text(pp_image)
