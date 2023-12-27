@@ -195,7 +195,7 @@ def croptheROI(image,bbox, index):
 
 
 # Read the original image
-original_image = cv2.imread('C:\\Users\\DELL\\Documents\\GitHub\\Number-Plate-Recognition-System\\samples\\DSC_1106.jpg')  
+original_image = cv2.imread('C:\\Users\\DELL\\Documents\\GitHub\\Number-Plate-Recognition-System\\samples\\seecsCar3.jpeg')  
 
 # Resize the image
 resized_image = cv2.resize(original_image, (1200, 1200))
